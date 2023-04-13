@@ -25,7 +25,7 @@ namespace DOOR.Shared.Utils
                 .Select(objectProvider).FirstOrDefaultAsync();
         }
 
-        public static async Task PostObject<T>(DOOROracleContext dbContext, DbSet<T> dataTable, T newObject, Expression<Func<T, bool>> whereClause) where T : class
+        public static async Task PostObject<T>(DOOROracleContext dbContext, DbSet<T> dataTable, Expression<Func<T, bool>> whereClause, T newObject) where T : class
         {
             T? currentObject = await dataTable.Where(whereClause).FirstOrDefaultAsync();
 

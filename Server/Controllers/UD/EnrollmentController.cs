@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using DOOR.Shared.Utils;
 using DOOR.Server.Controllers.Common;
 using DOOR.Server.Controllers.UD;
+using DOOR.Shared.DTO;
 
 namespace CSBA6.Server.Controllers.app
 {
@@ -20,11 +21,11 @@ namespace CSBA6.Server.Controllers.app
 
         [HttpGet]
         [Route("GetEnrollment")]
-        public async Task<IActionResult> GetCourse()
+        public async Task<IActionResult> GetEnrollment()
         {
-            List<Enrollment> lst = await DatabaseHelper.GetAllObjects(
+            List<EnrollmentDTO> lst = await DatabaseHelper.GetAllObjects(
                 _context.Enrollments,
-                e => new Enrollment
+                e => new EnrollmentDTO
                 {
                     StudentId = e.StudentId,
                     SectionId = e.SectionId,
@@ -41,13 +42,13 @@ namespace CSBA6.Server.Controllers.app
         }
 
         [HttpGet]
-        [Route("GetEnrollment/{_StudentId}/{_SectionNo}")]
-        public async Task<IActionResult> GetCourse(int _StudentId, int _SectionNo)
+        [Route("GetEnrollment/{_StudentId}/{_SectionId}")]
+        public async Task<IActionResult> GetEnrollment(int _StudentId, int _SectionId)
         {
-            Enrollment? lst = await DatabaseHelper.GetObject(
+            EnrollmentDTO? lst = await DatabaseHelper.GetObject(
                 _context.Enrollments,
-                x => x.StudentId == _StudentId && x.SectionId == _SectionNo,
-                e => new Enrollment
+                x => x.StudentId == _StudentId && x.SectionId == _SectionId,
+                e => new EnrollmentDTO
                 {
                     StudentId = e.StudentId,
                     SectionId = e.SectionId,
@@ -65,15 +66,22 @@ namespace CSBA6.Server.Controllers.app
 
         [HttpPost]
         [Route("PostEnrollment")]
-        public async Task<IActionResult> PostCourse([FromBody] Enrollment _Enrollment)
+        public async Task<IActionResult> PostEnrollment([FromBody] EnrollmentDTO _EnrollmentDTO)
         {
             try
             {
                 await DatabaseHelper.PostObject(
                     _context,
                     _context.Enrollments,
-                    _Enrollment,
-                    x => x.StudentId == _Enrollment.StudentId && x.SectionId == _Enrollment.SectionId
+                    x => x.StudentId == _EnrollmentDTO.StudentId && x.SectionId == _EnrollmentDTO.SectionId,
+                    new Enrollment
+                    {
+                        StudentId = _EnrollmentDTO.StudentId,
+                        SectionId = _EnrollmentDTO.SectionId,
+                        EnrollDate = _EnrollmentDTO.EnrollDate,
+                        FinalGrade = _EnrollmentDTO.FinalGrade,
+                        SchoolId = _EnrollmentDTO.SchoolId,
+                    }
                 );
             }
             catch (Exception ex)
@@ -89,20 +97,21 @@ namespace CSBA6.Server.Controllers.app
 
         [HttpPut]
         [Route("PutEnrollment")]
-        public async Task<IActionResult> PutCourse([FromBody] Enrollment _Enrollment)
+        public async Task<IActionResult> PutEnrollment([FromBody] EnrollmentDTO _EnrollmentDTO)
         {
             try
             {
                 await DatabaseHelper.PutObject(
                     _context,
                     _context.Enrollments,
-                    x => x.StudentId == _Enrollment.StudentId && x.SectionId == _Enrollment.SectionId,
+                    x => x.StudentId == _EnrollmentDTO.StudentId && x.SectionId == _EnrollmentDTO.SectionId,
                     e =>
                     {
-                        e.StudentId = _Enrollment.StudentId;
-                        e.SectionId = _Enrollment.SectionId;
-                        e.EnrollDate = _Enrollment.EnrollDate;
-                        e.FinalGrade = _Enrollment.FinalGrade;
+                        e.StudentId = _EnrollmentDTO.StudentId;
+                        e.SectionId = _EnrollmentDTO.SectionId;
+                        e.EnrollDate = _EnrollmentDTO.EnrollDate;
+                        e.FinalGrade = _EnrollmentDTO.FinalGrade;
+                        e.SchoolId = _EnrollmentDTO.SchoolId;
                     }
                 );
             }
@@ -114,17 +123,16 @@ namespace CSBA6.Server.Controllers.app
             return Ok();
         }
 
-
         [HttpDelete]
-        [Route("DeleteCourse/{_StudentNo}/{_SectionNo}")]
-        public async Task<IActionResult> DeleteCourse(int _StudentNo, int _SectionNo)
+        [Route("DeleteEnrollment/{_StudentId}/{_SectionId}")]
+        public async Task<IActionResult> DeleteEnrollment(int _StudentId, int _SectionId)
         {
             try
             {
                 await DatabaseHelper.DeleteObject(
                     _context,
                     _context.Enrollments,
-                    x => x.StudentId == _StudentNo && x.SectionId == _SectionNo
+                    x => x.StudentId == _StudentId && x.SectionId == _SectionId
                 );
             }
             catch (Exception ex)

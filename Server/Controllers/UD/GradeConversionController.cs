@@ -1,203 +1,149 @@
 ﻿using DOOR.EF.Data;
 using DOOR.EF.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Options;
-using System.Security.Cryptography;
-using System.Text.Json;
-using System.Runtime.InteropServices;
-using Microsoft.Extensions.Hosting.Internal;
-using System.Net.Http.Headers;
-using System.Drawing;
-using Microsoft.AspNetCore.Identity;
-using DOOR.Server.Models;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using System.Data;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using System.Numerics;
-using DOOR.Shared.DTO;
 using DOOR.Shared.Utils;
 using DOOR.Server.Controllers.Common;
+using DOOR.Server.Controllers.UD;
+using DOOR.Shared.DTO;
 
 namespace CSBA6.Server.Controllers.app
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class CourseController : BaseController
+    public class GradeConversionController : BaseController
     {
-        public CourseController(DOOROracleContext _DBcontext,
+        public GradeConversionController(DOOROracleContext _DBcontext,
             OraTransMsgs _OraTransMsgs)
             : base(_DBcontext, _OraTransMsgs)
 
         {
         }
 
-
         [HttpGet]
-        [Route("GetCourse")]
-        public async Task<IActionResult> GetCourse()
+        [Route("GetGradeConversion")]
+        public async Task<IActionResult> GetGradeConversion()
         {
-            List<CourseDTO> lst = await _context.Courses
-                .Select(sp => new CourseDTO
+            List<GradeConversionDTO> lst = await DatabaseHelper.GetAllObjects(
+                _context.GradeConversions,
+                gc => new GradeConversionDTO
                 {
-                    Cost = sp.Cost,
-                    CourseNo = sp.CourseNo,
-                    CreatedBy = sp.CreatedBy,
-                    CreatedDate = sp.CreatedDate,
-                    Description = sp.Description,
-                    ModifiedBy = sp.ModifiedBy,
-                    ModifiedDate = sp.ModifiedDate,
-                    Prerequisite = sp.Prerequisite
-                }).ToListAsync();
+                    SchoolId = gc.SchoolId,
+                    LetterGrade = gc.LetterGrade,
+                    GradePoint = gc.GradePoint,
+                    MaxGrade = gc.MaxGrade,
+                    MinGrade = gc.MinGrade,
+                    CreatedBy = gc.CreatedBy,
+                    CreatedDate = gc.CreatedDate,
+                    ModifiedBy = gc.ModifiedBy,
+                    ModifiedDate = gc.ModifiedDate,
+                }
+            );
             return Ok(lst);
         }
 
-
         [HttpGet]
-        [Route("GetCourse/{_CourseNo}")]
-        public async Task<IActionResult> GetCourse(int _CourseNo)
+        [Route("GetGradeConversion/{_SchoolId}/{_LetterGrade}")]
+        public async Task<IActionResult> GetGradeConversion(int _SchoolId, string _LetterGrade)
         {
-            CourseDTO? lst = await _context.Courses
-                .Where(x => x.CourseNo == _CourseNo)
-                .Select(sp => new CourseDTO
+            GradeConversionDTO? lst = await DatabaseHelper.GetObject(
+                _context.GradeConversions,
+                x => x.SchoolId == _SchoolId && x.LetterGrade == _LetterGrade,
+                gc => new GradeConversionDTO
                 {
-                    Cost = sp.Cost,
-                    CourseNo = sp.CourseNo,
-                    CreatedBy = sp.CreatedBy,
-                    CreatedDate = sp.CreatedDate,
-                    Description = sp.Description,
-                    ModifiedBy = sp.ModifiedBy,
-                    ModifiedDate = sp.ModifiedDate,
-                    Prerequisite = sp.Prerequisite
-                }).FirstOrDefaultAsync();
+                    SchoolId = gc.SchoolId,
+                    LetterGrade = gc.LetterGrade,
+                    GradePoint = gc.GradePoint,
+                    MaxGrade = gc.MaxGrade,
+                    MinGrade = gc.MinGrade,
+                    CreatedBy = gc.CreatedBy,
+                    CreatedDate = gc.CreatedDate,
+                    ModifiedBy = gc.ModifiedBy,
+                    ModifiedDate = gc.ModifiedDate,
+                }
+            );
             return Ok(lst);
         }
-
 
         [HttpPost]
-        [Route("PostCourse")]
-        public async Task<IActionResult> PostCourse([FromBody] CourseDTO _CourseDTO)
+        [Route("PostGradeConversion")]
+        public async Task<IActionResult> PostGradeConversion([FromBody] GradeConversionDTO _GradeConversionDTO)
         {
             try
             {
-                Course c = await _context.Courses.Where(x => x.CourseNo == _CourseDTO.CourseNo).FirstOrDefaultAsync();
-
-                if (c == null)
-                {
-                    c = new Course
+                await DatabaseHelper.PostObject(
+                    _context,
+                    _context.GradeConversions,
+                    x => x.SchoolId == _GradeConversionDTO.SchoolId && x.LetterGrade == _GradeConversionDTO.LetterGrade,
+                    new GradeConversion
                     {
-                        Cost = _CourseDTO.Cost,
-                        Description = _CourseDTO.Description,
-                        Prerequisite = _CourseDTO.Prerequisite
-                    };
-                    _context.Courses.Add(c);
-                    await _context.SaveChangesAsync();
-                }
-            }
-
-            catch (DbUpdateException Dex)
-            {
-                List<OraError> DBErrors = ErrorHandling.TryDecodeDbUpdateException(Dex, _OraTranslateMsgs);
-                return StatusCode(StatusCodes.Status417ExpectationFailed, Newtonsoft.Json.JsonConvert.SerializeObject(DBErrors));
+                        SchoolId = _GradeConversionDTO.SchoolId,
+                        LetterGrade = _GradeConversionDTO.LetterGrade,
+                        GradePoint = _GradeConversionDTO.GradePoint,
+                        MaxGrade = _GradeConversionDTO.MaxGrade,
+                        MinGrade = _GradeConversionDTO.MinGrade,
+                    }
+                );
             }
             catch (Exception ex)
             {
-                _context.Database.RollbackTransaction();
-                List<OraError> errors = new List<OraError>();
-                errors.Add(new OraError(1, ex.Message.ToString()));
-                string ex_ser = Newtonsoft.Json.JsonConvert.SerializeObject(errors);
-                return StatusCode(StatusCodes.Status417ExpectationFailed, ex_ser);
+                return StatusCode(
+                    StatusCodes.Status417ExpectationFailed,
+                    ErrorHelper.HandleDBException(_context, _OraTranslateMsgs, ex)
+                );
             }
 
             return Ok();
         }
-
-
-
-
-
-
-
 
         [HttpPut]
-        [Route("PutCourse")]
-        public async Task<IActionResult> PutCourse([FromBody] CourseDTO _CourseDTO)
+        [Route("PutGradeConversion")]
+        public async Task<IActionResult> PutGradeConversion([FromBody] GradeConversionDTO _GradeConversionDTO)
         {
             try
             {
-                Course c = await _context.Courses.Where(x => x.CourseNo == _CourseDTO.CourseNo).FirstOrDefaultAsync();
-
-                if (c != null)
-                {
-                    c.Description = _CourseDTO.Description;
-                    c.Cost = _CourseDTO.Cost;
-                    c.Prerequisite = _CourseDTO.Prerequisite;
-
-                    _context.Courses.Update(c);
-                    await _context.SaveChangesAsync();
-                }
-            }
-
-            catch (DbUpdateException Dex)
-            {
-                List<OraError> DBErrors = ErrorHandling.TryDecodeDbUpdateException(Dex, _OraTranslateMsgs);
-                return StatusCode(StatusCodes.Status417ExpectationFailed, Newtonsoft.Json.JsonConvert.SerializeObject(DBErrors));
+                await DatabaseHelper.PutObject(
+                    _context,
+                    _context.GradeConversions,
+                    x => x.SchoolId == _GradeConversionDTO.SchoolId && x.LetterGrade == _GradeConversionDTO.LetterGrade,
+                    gc =>
+                    {
+                        gc.SchoolId = _GradeConversionDTO.SchoolId;
+                        gc.LetterGrade = _GradeConversionDTO.LetterGrade;
+                        gc.GradePoint = _GradeConversionDTO.GradePoint;
+                        gc.MaxGrade = _GradeConversionDTO.MaxGrade;
+                        gc.MinGrade = _GradeConversionDTO.MinGrade;
+                    }
+                );
             }
             catch (Exception ex)
             {
-                _context.Database.RollbackTransaction();
-                List<OraError> errors = new List<OraError>();
-                errors.Add(new OraError(1, ex.Message.ToString()));
-                string ex_ser = Newtonsoft.Json.JsonConvert.SerializeObject(errors);
-                return StatusCode(StatusCodes.Status417ExpectationFailed, ex_ser);
+                return StatusCode(StatusCodes.Status417ExpectationFailed, ex);
             }
 
             return Ok();
         }
-
 
         [HttpDelete]
-        [Route("DeleteCourse/{_CourseNo}")]
-        public async Task<IActionResult> DeleteCourse(int _CourseNo)
+        [Route("DeleteGradeConversion/{_SchoolId}/{_LetterGrade}")]
+        public async Task<IActionResult> DeleteGradeConversion(int _SchoolId, string _LetterGrade)
         {
             try
             {
-                Course c = await _context.Courses.Where(x => x.CourseNo == _CourseNo).FirstOrDefaultAsync();
-
-                if (c != null)
-                {
-                    _context.Courses.Remove(c);
-                    await _context.SaveChangesAsync();
-                }
-            }
-
-            catch (DbUpdateException Dex)
-            {
-                List<OraError> DBErrors = ErrorHandling.TryDecodeDbUpdateException(Dex, _OraTranslateMsgs);
-                return StatusCode(StatusCodes.Status417ExpectationFailed, Newtonsoft.Json.JsonConvert.SerializeObject(DBErrors));
+                await DatabaseHelper.DeleteObject(
+                    _context,
+                    _context.GradeConversions,
+                    x => x.SchoolId == _SchoolId && x.LetterGrade == _LetterGrade
+                );
             }
             catch (Exception ex)
             {
-                _context.Database.RollbackTransaction();
-                List<OraError> errors = new List<OraError>();
-                errors.Add(new OraError(1, ex.Message.ToString()));
-                string ex_ser = Newtonsoft.Json.JsonConvert.SerializeObject(errors);
-                return StatusCode(StatusCodes.Status417ExpectationFailed, ex_ser);
+                return StatusCode(
+                    StatusCodes.Status417ExpectationFailed,
+                    ErrorHelper.HandleDBException(_context, _OraTranslateMsgs, ex)
+                );
             }
 
             return Ok();
         }
-
-
-
     }
 }

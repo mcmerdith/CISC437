@@ -1,203 +1,170 @@
 ﻿using DOOR.EF.Data;
 using DOOR.EF.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Options;
-using System.Security.Cryptography;
-using System.Text.Json;
-using System.Runtime.InteropServices;
-using Microsoft.Extensions.Hosting.Internal;
-using System.Net.Http.Headers;
-using System.Drawing;
-using Microsoft.AspNetCore.Identity;
-using DOOR.Server.Models;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using System.Data;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using System.Numerics;
-using DOOR.Shared.DTO;
 using DOOR.Shared.Utils;
 using DOOR.Server.Controllers.Common;
+using DOOR.Server.Controllers.UD;
+using DOOR.Shared.DTO;
+using static Duende.IdentityServer.Models.IdentityResources;
 
 namespace CSBA6.Server.Controllers.app
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class CourseController : BaseController
+    public class InstructorController : BaseController
     {
-        public CourseController(DOOROracleContext _DBcontext,
+        public InstructorController(DOOROracleContext _DBcontext,
             OraTransMsgs _OraTransMsgs)
             : base(_DBcontext, _OraTransMsgs)
 
         {
         }
 
-
         [HttpGet]
-        [Route("GetCourse")]
-        public async Task<IActionResult> GetCourse()
+        [Route("GetInstructor")]
+        public async Task<IActionResult> GetInstructor()
         {
-            List<CourseDTO> lst = await _context.Courses
-                .Select(sp => new CourseDTO
+            List<InstructorDTO> lst = await DatabaseHelper.GetAllObjects(
+                _context.Instructors,
+                i => new InstructorDTO
                 {
-                    Cost = sp.Cost,
-                    CourseNo = sp.CourseNo,
-                    CreatedBy = sp.CreatedBy,
-                    CreatedDate = sp.CreatedDate,
-                    Description = sp.Description,
-                    ModifiedBy = sp.ModifiedBy,
-                    ModifiedDate = sp.ModifiedDate,
-                    Prerequisite = sp.Prerequisite
-                }).ToListAsync();
+                    SchoolId = i.SchoolId,
+                    InstructorId = i.InstructorId,
+                    Salutation = i.Salutation,
+                    FirstName = i.FirstName,
+                    LastName = i.LastName,
+                    StreetAddress = i.StreetAddress,
+                    Zip = i.Zip,
+                    Phone = i.Phone,
+                    CreatedBy = i.CreatedBy,
+                    CreatedDate = i.CreatedDate,
+                    ModifiedBy = i.ModifiedBy,
+                    ModifiedDate = i.ModifiedDate,
+                }
+            );
             return Ok(lst);
         }
 
-
         [HttpGet]
-        [Route("GetCourse/{_CourseNo}")]
-        public async Task<IActionResult> GetCourse(int _CourseNo)
+        [Route("GetInstructor/{_SchoolId}/{_InstructorId}")]
+        public async Task<IActionResult> GetInstructor(int _SchoolId, int _InstructorId)
         {
-            CourseDTO? lst = await _context.Courses
-                .Where(x => x.CourseNo == _CourseNo)
-                .Select(sp => new CourseDTO
+            InstructorDTO? lst = await DatabaseHelper.GetObject(
+                _context.Instructors,
+                x => x.SchoolId == _SchoolId && x.InstructorId == _InstructorId,
+                i => new InstructorDTO
                 {
-                    Cost = sp.Cost,
-                    CourseNo = sp.CourseNo,
-                    CreatedBy = sp.CreatedBy,
-                    CreatedDate = sp.CreatedDate,
-                    Description = sp.Description,
-                    ModifiedBy = sp.ModifiedBy,
-                    ModifiedDate = sp.ModifiedDate,
-                    Prerequisite = sp.Prerequisite
-                }).FirstOrDefaultAsync();
+                    SchoolId = i.SchoolId,
+                    InstructorId = i.InstructorId,
+                    Salutation = i.Salutation,
+                    FirstName = i.FirstName,
+                    LastName = i.LastName,
+                    StreetAddress = i.StreetAddress,
+                    Zip = i.Zip,
+                    Phone = i.Phone,
+                    CreatedBy = i.CreatedBy,
+                    CreatedDate = i.CreatedDate,
+                    ModifiedBy = i.ModifiedBy,
+                    ModifiedDate = i.ModifiedDate,
+                }
+            );
             return Ok(lst);
         }
-
 
         [HttpPost]
-        [Route("PostCourse")]
-        public async Task<IActionResult> PostCourse([FromBody] CourseDTO _CourseDTO)
+        [Route("PostInstructor")]
+        public async Task<IActionResult> PostInstructor([FromBody] InstructorDTO _InstructorDTO)
         {
             try
             {
-                Course c = await _context.Courses.Where(x => x.CourseNo == _CourseDTO.CourseNo).FirstOrDefaultAsync();
-
-                if (c == null)
-                {
-                    c = new Course
+                await DatabaseHelper.PostObject(
+                    _context,
+                    _context.Instructors,
+                    x => x.SchoolId == _InstructorDTO.SchoolId && x.InstructorId == _InstructorDTO.InstructorId,
+                    new Instructor
                     {
-                        Cost = _CourseDTO.Cost,
-                        Description = _CourseDTO.Description,
-                        Prerequisite = _CourseDTO.Prerequisite
-                    };
-                    _context.Courses.Add(c);
-                    await _context.SaveChangesAsync();
-                }
-            }
-
-            catch (DbUpdateException Dex)
-            {
-                List<OraError> DBErrors = ErrorHandling.TryDecodeDbUpdateException(Dex, _OraTranslateMsgs);
-                return StatusCode(StatusCodes.Status417ExpectationFailed, Newtonsoft.Json.JsonConvert.SerializeObject(DBErrors));
+                        SchoolId = _InstructorDTO.SchoolId,
+                        InstructorId = _InstructorDTO.InstructorId,
+                        Salutation = _InstructorDTO.Salutation,
+                        FirstName = _InstructorDTO.FirstName,
+                        LastName = _InstructorDTO.LastName,
+                        StreetAddress = _InstructorDTO.StreetAddress,
+                        Zip = _InstructorDTO.Zip,
+                        Phone = _InstructorDTO.Phone,
+                        CreatedBy = _InstructorDTO.CreatedBy,
+                        CreatedDate = _InstructorDTO.CreatedDate,
+                        ModifiedBy = _InstructorDTO.ModifiedBy,
+                        ModifiedDate = _InstructorDTO.ModifiedDate,
+                    }
+                );
             }
             catch (Exception ex)
             {
-                _context.Database.RollbackTransaction();
-                List<OraError> errors = new List<OraError>();
-                errors.Add(new OraError(1, ex.Message.ToString()));
-                string ex_ser = Newtonsoft.Json.JsonConvert.SerializeObject(errors);
-                return StatusCode(StatusCodes.Status417ExpectationFailed, ex_ser);
+                return StatusCode(
+                    StatusCodes.Status417ExpectationFailed,
+                    ErrorHelper.HandleDBException(_context, _OraTranslateMsgs, ex)
+                );
             }
 
             return Ok();
         }
-
-
-
-
-
-
-
 
         [HttpPut]
-        [Route("PutCourse")]
-        public async Task<IActionResult> PutCourse([FromBody] CourseDTO _CourseDTO)
+        [Route("PutInstructor")]
+        public async Task<IActionResult> PutInstructor([FromBody] InstructorDTO _InstructorDTO)
         {
             try
             {
-                Course c = await _context.Courses.Where(x => x.CourseNo == _CourseDTO.CourseNo).FirstOrDefaultAsync();
-
-                if (c != null)
-                {
-                    c.Description = _CourseDTO.Description;
-                    c.Cost = _CourseDTO.Cost;
-                    c.Prerequisite = _CourseDTO.Prerequisite;
-
-                    _context.Courses.Update(c);
-                    await _context.SaveChangesAsync();
-                }
-            }
-
-            catch (DbUpdateException Dex)
-            {
-                List<OraError> DBErrors = ErrorHandling.TryDecodeDbUpdateException(Dex, _OraTranslateMsgs);
-                return StatusCode(StatusCodes.Status417ExpectationFailed, Newtonsoft.Json.JsonConvert.SerializeObject(DBErrors));
+                await DatabaseHelper.PutObject(
+                    _context,
+                    _context.Instructors,
+                    x => x.SchoolId == _InstructorDTO.SchoolId && x.InstructorId == _InstructorDTO.InstructorId,
+                    i =>
+                    {
+                        i.SchoolId = _InstructorDTO.SchoolId;
+                        i.InstructorId = _InstructorDTO.InstructorId;
+                        i.Salutation = _InstructorDTO.Salutation;
+                        i.FirstName = _InstructorDTO.FirstName;
+                        i.LastName = _InstructorDTO.LastName;
+                        i.StreetAddress = _InstructorDTO.StreetAddress;
+                        i.Zip = _InstructorDTO.Zip;
+                        i.Phone = _InstructorDTO.Phone;
+                        i.CreatedBy = _InstructorDTO.CreatedBy;
+                        i.CreatedDate = _InstructorDTO.CreatedDate;
+                        i.ModifiedBy = _InstructorDTO.ModifiedBy;
+                        i.ModifiedDate = _InstructorDTO.ModifiedDate;
+                    }
+                );
             }
             catch (Exception ex)
             {
-                _context.Database.RollbackTransaction();
-                List<OraError> errors = new List<OraError>();
-                errors.Add(new OraError(1, ex.Message.ToString()));
-                string ex_ser = Newtonsoft.Json.JsonConvert.SerializeObject(errors);
-                return StatusCode(StatusCodes.Status417ExpectationFailed, ex_ser);
+                return StatusCode(StatusCodes.Status417ExpectationFailed, ex);
             }
 
             return Ok();
         }
-
 
         [HttpDelete]
-        [Route("DeleteCourse/{_CourseNo}")]
-        public async Task<IActionResult> DeleteCourse(int _CourseNo)
+        [Route("DeleteInstructor/{_SchoolId}/{_InstructorId}")]
+        public async Task<IActionResult> DeleteInstructor(int _SchoolId, int _InstructorId)
         {
             try
             {
-                Course c = await _context.Courses.Where(x => x.CourseNo == _CourseNo).FirstOrDefaultAsync();
-
-                if (c != null)
-                {
-                    _context.Courses.Remove(c);
-                    await _context.SaveChangesAsync();
-                }
-            }
-
-            catch (DbUpdateException Dex)
-            {
-                List<OraError> DBErrors = ErrorHandling.TryDecodeDbUpdateException(Dex, _OraTranslateMsgs);
-                return StatusCode(StatusCodes.Status417ExpectationFailed, Newtonsoft.Json.JsonConvert.SerializeObject(DBErrors));
+                await DatabaseHelper.DeleteObject(
+                    _context,
+                    _context.Instructors,
+                    x => x.SchoolId == _SchoolId && x.InstructorId == _InstructorId
+                );
             }
             catch (Exception ex)
             {
-                _context.Database.RollbackTransaction();
-                List<OraError> errors = new List<OraError>();
-                errors.Add(new OraError(1, ex.Message.ToString()));
-                string ex_ser = Newtonsoft.Json.JsonConvert.SerializeObject(errors);
-                return StatusCode(StatusCodes.Status417ExpectationFailed, ex_ser);
+                return StatusCode(
+                    StatusCodes.Status417ExpectationFailed,
+                    ErrorHelper.HandleDBException(_context, _OraTranslateMsgs, ex)
+                );
             }
 
             return Ok();
         }
-
-
-
     }
 }
