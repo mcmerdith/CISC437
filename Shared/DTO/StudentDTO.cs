@@ -5,22 +5,34 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace DOOR.Shared.DTO
 {
-    public class CourseDTO
+    public class StudentDTO
     {
-        public int CourseNo { get; set; }
+        public int StudentId { get; set; }
+        [StringLength(5)]
+        public string? Salutation { get; set; }
+        [StringLength(25)]
+        public string? FirstName { get; set; }
+        [StringLength(25)]
+        public string LastName { get; set; } = null!;
         [StringLength(50)]
-        public string Description { get; set; } = null!;
-        public decimal? Cost { get; set; }
-        public int? Prerequisite { get; set; }
+        public string? StreetAddress { get; set; }
+        [StringLength(5)]
+        public string Zip { get; set; } = null!;
+        [StringLength(15)]
+        public string? Phone { get; set; }
+        [StringLength(50)]
+        public string? Employer { get; set; }
+        public DateTime RegistrationDate { get; set; }
         [StringLength(30)]
         public string CreatedBy { get; set; } = null!;
         public DateTime CreatedDate { get; set; }
         [StringLength(30)]
-
         public string ModifiedBy { get; set; } = null!;
         public DateTime ModifiedDate { get; set; }
+        public int SchoolId { get; set; }
     }
 }
